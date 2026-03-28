@@ -1,0 +1,13 @@
+pandas
+numpy
+
+scikit-learn
+
+torch
+
+gensim
+sentence-transformers
+
+fastapi
+uvicorn
+pydantic

@@ -1,89 +1,114 @@
 import pandas as pd
 import numpy as np
+import ast
 import os
 
-# 1. 원본 데이터 로드
-def load_data(data_dir='./data'):
-    # u.data 로드 (탭 구분자)
-    data_cols = ['user_id', 'item_id', 'rating', 'timestamp']
-    df_ratings = pd.read_csv(f'{data_dir}/u.data', sep='\t', names=data_cols, encoding='latin-1')
-    
-    # u.item 로드 (파이프 구분자)
-    item_cols = ['item_id', 'title', 'release_date', 'video_release_date', 'imdb_url'] + \
-                [f'genre_{i}' for i in range(19)]
-    df_items = pd.read_csv(f'{data_dir}/u.item', sep='|', names=item_cols, encoding='latin-1')
-    
-    return df_ratings, df_items
+def preprocess_all_data(raw_dir='./backend/data/raw', save_dir='./backend/data/processed'):
+    print("🚀 통합 데이터 전처리를 시작합니다... (전통적 추천 + 의미론적 검색)")
 
-# 2. 모델별 전처리 함수들
-def get_cb_data(df_items):
-    """
-    [콘텐츠 기반(CB) 전처리]
-    영화별로 19개의 장르 데이터(0 또는 1)만 추출하여 벡터로 만듭니다.
-    나중에 이 벡터들 간의 코사인 유사도를 구해서 추천합니다.
-    """
-    genre_cols = [col for col in df_items.columns if col.startswith('genre_')]
-    
-    # item_id를 인덱스로 하고 장르 정보만 남긴 DataFrame 반환
-    cb_features = df_items.set_index('item_id')[genre_cols]
-    return cb_features
+    # 1. 원본 데이터 로드 (메모리 최적화를 위해 필수 컬럼만 지정)
+    print("데이터 로딩 중...")
+    df_meta = pd.read_csv(f'{raw_dir}/movies_metadata.csv', 
+                          usecols=['id', 'title', 'genres', 'overview'], low_memory=False)
+    df_ratings = pd.read_csv(f'{raw_dir}/ratings_small.csv', 
+                             usecols=['userId', 'movieId', 'rating'])
+    df_links = pd.read_csv(f'{raw_dir}/links.csv', 
+                           usecols=['movieId', 'tmdbId'])
+    df_credits = pd.read_csv(f'{raw_dir}/credits.csv',
+                             usecols=['id', 'cast', 'crew'])
 
-def get_cf_data(df_ratings):
-    """
-    [협업 필터링(CF) 전처리]
-    유저-아이템 평점 행렬(User-Item Matrix)을 만듭니다.
-    가로축은 영화, 세로축은 유저이며, 평점을 안 남긴 곳은 NaN이 됩니다.
-    """
-    cf_matrix = df_ratings.pivot(index='user_id', columns='item_id', values='rating')
-    return cf_matrix
+    # 2. ID 타입 통일 및 쓰레기값 제거
+    df_meta['id'] = pd.to_numeric(df_meta['id'], errors='coerce')
+    df_meta = df_meta.dropna(subset=['id'])
+    df_meta['id'] = df_meta['id'].astype(int)
 
-def get_ncf_data(df_ratings):
-    """
-    [딥러닝(NCF) 전처리]
-    PyTorch 등의 Embedding 레이어에 넣기 위해서는 ID가 중간에 비어있지 않고
-    0부터 순차적으로 이어지는 정수(Index)여야 합니다. (Label Encoding)
-    """
-    df_ncf = df_ratings.copy()
-    
-    # 범주형(category)으로 변환 후 codes를 가져오면 0부터 시작하는 정수로 매핑됨
-    df_ncf['user_idx'] = df_ncf['user_id'].astype('category').cat.codes
-    df_ncf['item_idx'] = df_ncf['item_id'].astype('category').cat.codes
-    
-    # 학습에 필요한 '유저 인덱스, 아이템 인덱스, 평점'만 반환
-    return df_ncf[['user_idx', 'item_idx', 'rating']]
+    df_links = df_links.dropna(subset=['tmdbId'])
+    df_links['tmdbId'] = df_links['tmdbId'].astype(int)
 
-def get_hybrid_data(df_ratings, df_items):
-    """
-    [하이브리드 전처리]
-    NCF 모델에 장르 정보(CB 피처)를 태워서 성능을 높이기 위해
-    평점 데이터에 아이템의 메타데이터를 병합(Merge)합니다.
-    """
-    df_hybrid = pd.merge(df_ratings, df_items, on='item_id', how='left')
-    return df_hybrid
+    df_credits['id'] = pd.to_numeric(df_credits['id'], errors='coerce')
+    df_credits = df_credits.dropna(subset=['id'])
+    df_credits['id'] = df_credits['id'].astype(int)
 
-if __name__ == "__main__":
-    # 원본 데이터 불러오기
-    df_ratings, df_items = load_data()
+    # 3. 데이터 병합 (MovieLens ID 기준으로 통합)
+    print("데이터 병합 중...")
+    df_meta = pd.merge(df_meta, df_links, left_on='id', right_on='tmdbId', how='inner')
+    df_meta = pd.merge(df_meta, df_credits, on='id', how='left')
+    df_meta = df_meta.drop(columns=['id', 'tmdbId']) # 불필요해진 TMDB ID 제거
+
+    # 4. JSON 텍스트 파싱 및 특성 추출
+    print("텍스트 파싱 및 자연어 문장 구성 중...")
     
-    # 전처리 수행
-    cb_data = get_cb_data(df_items)
-    cf_matrix = get_cf_data(df_ratings)
-    ncf_data = get_ncf_data(df_ratings)
-    hybrid_data = get_hybrid_data(df_ratings, df_items)
+    # 4-1. 장르
+    df_meta['genres'] = df_meta['genres'].fillna('[]').apply(ast.literal_eval)
+    df_meta['genres_list'] = df_meta['genres'].apply(lambda x: [i['name'] for i in x] if isinstance(x, list) else [])
+    df_meta['genres_str'] = df_meta['genres_list'].apply(lambda x: ' '.join(x)) # CB 및 TF-IDF용
+
+    # 4-2. 배우 (노이즈 방지를 위해 Top 3만)
+    def get_top_cast(x):
+        try:
+            cast_list = ast.literal_eval(x)
+            return [i['name'] for i in cast_list][:3] if isinstance(cast_list, list) else []
+        except:
+            return []
+    df_meta['cast_list'] = df_meta['cast'].fillna('[]').apply(get_top_cast)
     
-    # --- [추가된 부분: 파일로 저장하기] ---
-    # 저장할 폴더 만들기
-    save_dir = './data/processed'
+    # 4-3. 감독
+    def get_director(x):
+        try:
+            crew_list = ast.literal_eval(x)
+            for i in crew_list:
+                if i.get('job') == 'Director':
+                    return [i['name']]
+            return []
+        except:
+            return []
+    df_meta['director'] = df_meta['crew'].fillna('[]').apply(get_director)
+
+    # 5. 의미론적 임베딩용 통합 텍스트(combined_text) 생성
+    df_meta['overview'] = df_meta['overview'].fillna('')
+    
+    def create_combined_text(row):
+        text = f"Title: {row['title']}. "
+        if row['genres_list']:
+            text += f"Genres: {', '.join(row['genres_list'])}. "
+        if row['director']:
+            text += f"Directed by {row['director'][0]}. "
+        if row['cast_list']:
+            text += f"Starring {', '.join(row['cast_list'])}. "
+        text += f"Overview: {row['overview']}"
+        return text
+
+    df_meta['combined_text'] = df_meta.apply(create_combined_text, axis=1)
+
+    # 메모리 최적화를 위해 파싱이 끝난 원본 리스트 컬럼 제거
+    df_meta = df_meta.drop(columns=['genres', 'cast', 'crew'])
+
+    # 6. 추천 알고리즘(CF, NCF)용 서브 데이터셋 생성
+    print("CF 및 NCF용 데이터셋 생성 중...")
+    
+    # 6-1. CF용 User-Item 평점 행렬
+    cf_matrix = df_ratings.pivot(index='userId', columns='movieId', values='rating')
+
+    # 6-2. NCF용 라벨 인코딩 (0부터 시작하는 인덱스)
+    ncf_data = df_ratings.copy()
+    ncf_data['user_idx'] = ncf_data['userId'].astype('category').cat.codes
+    ncf_data['item_idx'] = ncf_data['movieId'].astype('category').cat.codes
+    ncf_data = ncf_data[['user_idx', 'item_idx', 'rating', 'movieId']]
+
+    # 7. 파일 저장
+    print("Pickle 파일로 저장 중...")
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    
-    # Pickle(.pkl) 파일로 내보내기
-    cb_data.to_pickle(f'{save_dir}/cb_data.pkl')
+
+    df_meta.to_pickle(f'{save_dir}/movies_meta.pkl')
     cf_matrix.to_pickle(f'{save_dir}/cf_matrix.pkl')
     ncf_data.to_pickle(f'{save_dir}/ncf_data.pkl')
-    hybrid_data.to_pickle(f'{save_dir}/hybrid_data.pkl')
-    
-    print(f"✅ 전처리 완료! 가공된 데이터가 '{save_dir}' 폴더에 저장되었습니다.")
-    print("CB 데이터 형태 (Item x Genres):", cb_data.shape)
-    print("CF 행렬 형태 (User x Item):", cf_matrix.shape)
-    print("NCF 데이터 샘플:\n", ncf_data.head(3))
+
+    print("✅ 모든 전처리 완료!")
+    print(f"- 확보된 전체 영화 수: {len(df_meta)}개")
+    print(f"- CF 평점 행렬 크기: {cf_matrix.shape}")
+    print(f"- NCF 학습용 데이터 수: {len(ncf_data)}개")
+    print(f"- 의미론적 검색용 텍스트 샘플:\n {df_meta['combined_text'].iloc[0]}")
+
+if __name__ == "__main__":
+    preprocess_all_data()
