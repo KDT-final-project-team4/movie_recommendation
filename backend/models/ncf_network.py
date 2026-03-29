@@ -2,28 +2,29 @@ import torch
 import torch.nn as nn
 
 class NCFModel(nn.Module):
-    def __init__(self, num_users, num_items, embedding_dim=32):
+    def __init__(self, num_users, num_items, embed_size=32):
         super(NCFModel, self).__init__()
-        # 유저와 아이템을 고차원 벡터로 변환 (ID의 크기만큼 임베딩 테이블 생성)
-        self.user_embedding = nn.Embedding(num_users, embedding_dim)
-        self.item_embedding = nn.Embedding(num_items, embedding_dim)
+        # 유저와 아이템의 숨겨진 취향을 32차원 벡터로 변환
+        self.user_embedding = nn.Embedding(num_users, embed_size)
+        self.item_embedding = nn.Embedding(num_items, embed_size)
         
-        # 다층 퍼셉트론(MLP) 계층
-        self.fc1 = nn.Linear(embedding_dim * 2, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.output = nn.Linear(32, 1)
-        
-        self.relu = nn.ReLU()
+        # 딥러닝 신경망 레이어
+        self.fc_layers = nn.Sequential(
+            nn.Linear(embed_size * 2, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1)
+        )
 
     def forward(self, user_indices, item_indices):
-        user_emb = self.user_embedding(user_indices)
-        item_emb = self.item_embedding(item_indices)
+        user_vector = self.user_embedding(user_indices)
+        item_vector = self.item_embedding(item_indices)
         
-        # 유저와 아이템 특성 결합
-        x = torch.cat([user_emb, item_emb], dim=1)
+        # 유저 벡터와 아이템 벡터를 이어 붙임(Concatenate)
+        vector = torch.cat([user_vector, item_vector], dim=-1)
         
-        # 비선형 신경망 통과
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        
-        return self.output(x)
+        # 신경망 통과하여 최종 예상 평점(Score) 출력
+        prediction = self.fc_layers(vector)
+        return prediction.squeeze()

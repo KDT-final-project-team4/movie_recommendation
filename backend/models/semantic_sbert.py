@@ -53,8 +53,8 @@ class SBERTSearcher:
             movie = self.df_meta.iloc[idx]
             results.append({
                 'item_id': int(movie['movieId']),
-                'title': movie['title'],
-                'similarity': round(score * 100, 2)
+                'title': str(movie['title']),
+                'similarity': float(round(score * 100, 2))
             })
             
         return results

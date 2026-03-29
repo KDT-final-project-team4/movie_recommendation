@@ -78,3 +78,5 @@ backend/data/
 *.db
 *.sqlite
 *.sqlite3
+
+frontend/package-lock.json

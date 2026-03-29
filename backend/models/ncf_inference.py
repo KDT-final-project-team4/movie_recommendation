@@ -1,40 +1,68 @@
-import torch
 import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
-from models.ncf_network import NCFModel
+import torch
+import os
 
-def get_ncf_data_recommend(movie_id, df_items, ncf_data, weights_path='./data/processed/ncf_weights.pth', top_n=5):
-    """
-    [NCF 추론 로직]
-    저장된 가중치를 불러와 아이템 임베딩을 추출하고, 유사한 영화를 추천합니다.
-    """
-    # 1. 모델 껍데기 준비 및 저장된 가중치 로드
-    num_users = ncf_data['user_idx'].nunique()
-    num_items = ncf_data['item_idx'].nunique()
-    
-    model = NCFModel(num_users, num_items)
-    
-    try:
-        model.load_state_dict(torch.load(weights_path))
-        model.eval() # 추론 모드로 전환 (Dropout, BatchNorm 등 비활성화)
-    except FileNotFoundError:
-        return ["에러: NCF 가중치 파일이 없습니다. ncf_train.py를 먼저 실행하세요."]
+# 단독 실행(테스트)과 메인 서버(app.py) 호출을 모두 지원하기 위한 임포트 분기 처리
+try:
+    from models.ncf_network import NCFModel
+except ModuleNotFoundError:
+    from ncf_network import NCFModel
 
-    # 2. 타겟 영화 ID를 NCF 모델 내부 인덱스(item_idx)로 변환
-    item_mapping = ncf_data[['item_id', 'item_idx']].drop_duplicates().set_index('item_id')
+def get_ncf_recommend(mapped_user_idx, processed_dir='./backend/data/processed', top_n=5):
+    """
+    [NCF 추천] 가상 유저와 매핑된 실제 user_idx를 받아 딥러닝 예측 평점이 가장 높은 영화를 반환합니다.
+    """
+    # 1. 데이터 및 모델 로드
+    df_meta = pd.read_pickle(f'{processed_dir}/movies_meta.pkl')
+    ncf_data = pd.read_pickle(f'{processed_dir}/ncf_data.pkl')
     
-    if movie_id not in item_mapping.index:
-        return ["해당 영화는 NCF 학습 데이터에 존재하지 않습니다."]
+    checkpoint = torch.load(f'{processed_dir}/ncf_model.pth', map_location=torch.device('cpu'))
+    model = NCFModel(checkpoint['num_users'], checkpoint['num_items'])
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model.eval()
+    
+    # 2. 유저가 이미 본 영화 파악 (추천에서 제외하기 위함)
+    seen_items = ncf_data[ncf_data['user_idx'] == mapped_user_idx]['item_idx'].unique()
+    
+    # 3. 전체 아이템 풀에서 안 본 영화 필터링
+    all_items = ncf_data['item_idx'].unique()
+    unseen_items = [i for i in all_items if i not in seen_items]
+    
+    if not unseen_items:
+        return [{"title": "추천할 새로운 영화가 없습니다.", "similarity": 0.0}]
         
-    # 3. 학습된 아이템 임베딩(특징 벡터) 추출
-    item_embeddings = model.item_embedding.weight.data.numpy()
+    # 4. 파이토치 텐서 변환 및 NCF 추론
+    user_tensor = torch.tensor([mapped_user_idx] * len(unseen_items), dtype=torch.long)
+    item_tensor = torch.tensor(unseen_items, dtype=torch.long)
     
-    # 4. 임베딩 벡터 간 코사인 유사도 계산
-    cosine_sim = cosine_similarity(item_embeddings, item_embeddings)
-    sim_df = pd.DataFrame(cosine_sim, index=item_mapping.index, columns=item_mapping.index)
+    with torch.no_grad():
+        predictions = model(user_tensor, item_tensor).numpy()
+        
+    # 5. 예상 평점 높은 순으로 정렬
+    top_indices = predictions.argsort()[::-1][:top_n]
     
-    # 5. 자기 자신 제외 상위 5개 추출 및 영화 제목 변환
-    similar_ids = sim_df[movie_id].sort_values(ascending=False)[1:top_n+1].index
-    recommendations = df_items[df_items['item_id'].isin(similar_ids)]['title'].tolist()
-    
-    return recommendations
+    results = []
+    for idx in top_indices:
+        item_idx = unseen_items[idx]
+        pred_score = predictions[idx]
+        
+        # item_idx를 원래의 movieId로 역변환하여 메타데이터 찾기
+        movie_id = ncf_data[ncf_data['item_idx'] == item_idx]['movieId'].iloc[0]
+        movie_info = df_meta[df_meta['movieId'] == movie_id]
+        
+        if not movie_info.empty:
+            results.append({
+                'item_id': int(movie_id),
+                'title': str(movie_info.iloc[0]['title']),
+                # 최고 평점 5점을 기준으로 100% 환산 (최대 100% 제한)
+                'similarity': float(min(round((pred_score / 5.0) * 100, 2), 100.0))
+            })
+            
+    return results
+
+if __name__ == "__main__":
+    # 테스트: 42번 유저(가상 유저 Alex와 매핑되었다고 가정) 추천
+    print("🧠 NCF 추론 결과 (user_idx: 42)")
+    recs = get_ncf_recommend(mapped_user_idx=42, processed_dir='./backend/data/processed')
+    for r in recs:
+        print(f"- {r['title']} (AI 예측 적합도: {r['similarity']}%)")
