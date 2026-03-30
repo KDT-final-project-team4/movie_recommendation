@@ -1,9 +1,12 @@
+import os
+import json
+import math
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 
-# 우리가 만든 6개의 추천/검색 알고리즘 임포트
+# 6개의 추천/검색 알고리즘 임포트
 from models.cb_model import get_cb_data_recommend
 from models.cf_model import get_cf_data_recommend
 from models.ncf_inference import get_ncf_recommend
@@ -13,72 +16,130 @@ from models.semantic_sbert import SBERTSearcher
 
 app = FastAPI(title="AI Movie Recommendation API")
 
-# 프론트엔드(React)에서 API를 호출할 수 있도록 CORS 허용
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], # 명시적으로 프론트엔드 주소 허용
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ---------------------------------------------------------
-# 1. 전역 데이터 및 모델 로드 (서버 켤 때 딱 1번만 실행하여 속도 최적화)
+# 1. 전역 데이터 및 모델 로드
 # ---------------------------------------------------------
 print("⏳ 서버 초기화 중... (데이터 및 AI 모델 로드)")
 df_meta = pd.read_pickle('data/processed/movies_meta.pkl')
 cf_matrix = pd.read_pickle('data/processed/cf_matrix.pkl')
 
-# NLP 검색 모델 3대장 장전
 tfidf_searcher = TFIDFSearcher('data/processed')
 w2v_searcher = Word2VecSearcher('data/processed')
 sbert_searcher = SBERTSearcher('data/processed')
-print("✅ 서버 초기화 완료!")
 
 # ---------------------------------------------------------
-# 2. 프론트엔드 가상 유저(Mock User) 취향 프로필 매핑
+# 2. 가상 유저 취향 프로필 및 정답지 설정
 # ---------------------------------------------------------
-# 프론트엔드에서 'alex', 'Alex', 'action' 등 어떤 형태로 넘어와도 방어할 수 있도록 키값을 넉넉하게 세팅합니다.
-MOCK_USER_PROFILES = {
-    # 1. Alex (액션 매니아) - ID: action
-    "action": {"ratings": {58559: 5.0, 122886: 4.5, 2571: 5.0, 1198: 4.5, 110: 4.0}, "mapped_ncf_user_idx": 10},
-    
-    # 2. Jamie (로코 팬) - ID: romcom
-    "romcom": {"ratings": {104374: 5.0, 2671: 5.0, 356: 4.5, 1721: 4.5, 339: 4.0}, "mapped_ncf_user_idx": 20},
-    
-    # 3. Morgan (SF 덕후) - ID: scifi
-    "scifi": {"ratings": {109487: 5.0, 2571: 5.0, 260: 4.5, 1270: 5.0, 1240: 4.5}, "mapped_ncf_user_idx": 30},
-    
-    # 4. Riley (호러 팬) - ID: horror
-    "horror": {"ratings": {103141: 5.0, 8665: 4.0, 2762: 4.5, 593: 5.0, 1258: 4.5}, "mapped_ncf_user_idx": 40}
+# 가상 유저별 타겟 장르 (정량 평가를 위한 Ground Truth)
+TARGET_GENRES = {
+    "action": ["Action", "Sci-Fi"],
+    "romcom": ["Romance", "Comedy"],
+    "scifi": ["Sci-Fi", "Fantasy"],
+    "horror": ["Horror", "Thriller"]
 }
 
+mock_profiles_path = 'data/processed/mock_profiles.json'
+MOCK_USER_PROFILES = {}
+
+if os.path.exists(mock_profiles_path):
+    with open(mock_profiles_path, 'r', encoding='utf-8') as f:
+        raw_profiles = json.load(f)
+        for user_id, profile in raw_profiles.items():
+            MOCK_USER_PROFILES[user_id] = {
+                "ratings": {int(k): float(v) for k, v in profile["ratings"].items()},
+                "mapped_ncf_user_idx": profile["mapped_ncf_user_idx"]
+            }
+    print("✅ 가상 유저 데이터 로드 완료")
+else:
+    print("⚠️ mock_profiles.json 파일이 없습니다. generate_mock_data.py를 먼저 실행하세요.")
+
 # ---------------------------------------------------------
-# 3. API 엔드포인트: 홈 화면 개인화 추천 (CB, CF, NCF)
+# 3. 평가 로직 (Metrics Calculation)
+# ---------------------------------------------------------
+def evaluate_recommendations(results, target_genres, df_meta):
+    """추천 결과를 정답지와 비교하여 Precision, NDCG, Diversity를 계산합니다."""
+    if not results:
+        return results, {"precision_at_10": 0, "ndcg_at_10": 0, "diversity": 0}
+
+    hits = 0
+    dcg = 0.0
+    idcg = 0.0
+    unique_genres = set()
+
+    for i, res in enumerate(results):
+        m_id = res['item_id']
+        movie_row = df_meta[df_meta['movieId'] == m_id]
+        genres = movie_row.iloc[0]['genres_list'] if not movie_row.empty else []
+        
+        if isinstance(genres, list):
+            unique_genres.update(genres)
+            # 정답 판별: 타겟 장르가 포함되어 있는가?
+            is_hit = any(g in genres for g in target_genres)
+        else:
+            is_hit = False
+
+        res['is_hit'] = is_hit # 시각화용 태그
+
+        if is_hit:
+            hits += 1
+            dcg += 1.0 / math.log2((i + 1) + 1)
+        
+        # 이상적인 DCG 계산 (모두 정답일 경우)
+        idcg += 1.0 / math.log2((i + 1) + 1)
+
+    metrics = {
+        "precision_at_10": round(hits / len(results), 2) if results else 0,
+        "ndcg_at_10": round(dcg / idcg, 2) if idcg > 0 else 0,
+        "diversity": len(unique_genres)
+    }
+    
+    return results, metrics
+
+# ---------------------------------------------------------
+# 4. API 엔드포인트: 개인화 추천 및 평가 데이터 반환
 # ---------------------------------------------------------
 @app.get("/api/recommend/home/{user_id}")
 async def get_home_recommendations(user_id: str):
-    # 프론트에서 넘어온 user_id가 소문자인지 확실히 하고, 없으면 "action"을 기본값으로 사용
     safe_user_id = user_id.lower()
-    profile = MOCK_USER_PROFILES.get(safe_user_id, MOCK_USER_PROFILES["action"])
     
-    mock_ratings = profile["ratings"]
-    ncf_user_idx = profile["mapped_ncf_user_idx"]
+    if not MOCK_USER_PROFILES:
+        return {"error": "User profiles data is missing."}
+        
+    profile = MOCK_USER_PROFILES.get(safe_user_id, MOCK_USER_PROFILES.get("action", {}))
+    mock_ratings = profile.get("ratings", {})
+    ncf_user_idx = profile.get("mapped_ncf_user_idx", 10)
+    
+    # 정답지 로드
+    target_genres = TARGET_GENRES.get(safe_user_id, ["Action"])
 
-    # 3대장 알고리즘 동시 가동 (top_n 10개 유지)
-    cb_results = get_cb_data_recommend(mock_ratings, df_meta, top_n=10)
-    cf_results = get_cf_data_recommend(99999, mock_ratings, cf_matrix, df_meta, top_n=10) 
-    ncf_results = get_ncf_recommend(ncf_user_idx, processed_dir='data/processed', top_n=10)
+    # 1. 알고리즘별 추천 결과 획득
+    cb_raw = get_cb_data_recommend(mock_ratings, df_meta, top_n=10)
+    cf_raw = get_cf_data_recommend(99999, mock_ratings, cf_matrix, df_meta, top_n=10) 
+    ncf_raw = get_ncf_recommend(ncf_user_idx, processed_dir='data/processed', top_n=10)
+
+    # 2. 실시간 성능 평가 실시
+    cb_results, cb_metrics = evaluate_recommendations(cb_raw, target_genres, df_meta)
+    cf_results, cf_metrics = evaluate_recommendations(cf_raw, target_genres, df_meta)
+    ncf_results, ncf_metrics = evaluate_recommendations(ncf_raw, target_genres, df_meta)
 
     return {
         "user_id": user_id,
-        "cb_top5": cb_results,
-        "cf_top5": cf_results,
-        "ncf_top5": ncf_results
+        "target_genres": target_genres,
+        "cb_data": {"results": cb_results, "metrics": cb_metrics},
+        "cf_data": {"results": cf_results, "metrics": cf_metrics},
+        "ncf_data": {"results": ncf_results, "metrics": ncf_metrics}
     }
 
 # ---------------------------------------------------------
-# 4. API 엔드포인트: 의미론적 검색 (TF-IDF, W2V, SBERT)
+# 5. API 엔드포인트: 의미론적 검색 (기본 유지)
 # ---------------------------------------------------------
 class SearchRequest(BaseModel):
     query: str
@@ -87,19 +148,17 @@ class SearchRequest(BaseModel):
 async def get_semantic_search(request: SearchRequest):
     query = request.query
 
-    # NLP 3대장 알고리즘 동시 가동 (top_n을 10으로 상향 조정)
     tfidf_results = tfidf_searcher.search(query, top_n=10)
     w2v_results = w2v_searcher.search(query, top_n=10)
     sbert_results = sbert_searcher.search(query, top_n=10)
 
     return {
         "query": query,
-        "tfidf_top5": tfidf_results,
-        "w2v_top5": w2v_results,
-        "sbert_top5": sbert_results
+        "tfidf_results": tfidf_results,
+        "w2v_results": w2v_results,
+        "sbert_results": sbert_results
     }
 
 if __name__ == "__main__":
     import uvicorn
-    # 터미널에서 python app.py 로 바로 실행할 수 있도록 세팅
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

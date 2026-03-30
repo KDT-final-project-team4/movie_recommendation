@@ -69,13 +69,13 @@ def preprocess_all_data(raw_dir='data/raw', save_dir='data/processed'):
     
     def create_combined_text(row):
         text = f"Title: {row['title']}. "
+        text += f"Overview: {row['overview']}. "  # 줄거리를 가장 앞으로!
         if row['genres_list']:
             text += f"Genres: {', '.join(row['genres_list'])}. "
         if row['director']:
             text += f"Directed by {row['director'][0]}. "
         if row['cast_list']:
             text += f"Starring {', '.join(row['cast_list'])}. "
-        text += f"Overview: {row['overview']}"
         return text
 
     df_meta['combined_text'] = df_meta.apply(create_combined_text, axis=1)
