@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router";
+import { Loader2 } from "lucide-react";
 import { Header } from "./header";
 import { MovieCarousel } from "./movie-carousel";
-import { MOCK_USERS } from "./mock-data"; // generateMovies는 지웠습니다!
+import { MOCK_USERS } from "./mock-data";
 
-// 백엔드 검색 결과 타입 정의
 interface MovieResult {
   item_id?: number;
   title: string;
@@ -19,13 +19,11 @@ export function SearchResults() {
   const query = searchParams.get("q") || "A hacker discovers that the world is a simulated reality";
   const [search, setSearch] = useState(query);
 
-  // 백엔드 데이터를 담을 State
   const [tfidfMovies, setTfidfMovies] = useState<MovieResult[]>([]);
   const [w2vMovies, setW2vMovies] = useState<MovieResult[]>([]);
   const [sbertMovies, setSbertMovies] = useState<MovieResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 백엔드 API 호출 로직
   useEffect(() => {
     const fetchSearchResults = async () => {
       if (!query) return;
@@ -41,7 +39,6 @@ export function SearchResults() {
 
         const data = await response.json();
 
-        // 백엔드에서 받은 10개 결과 저장
         setTfidfMovies(data.tfidf_results || []);
         setW2vMovies(data.w2v_results || []);
         setSbertMovies(data.sbert_results || []);
@@ -62,7 +59,7 @@ export function SearchResults() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50">
+    <div className="min-h-screen bg-[#0B1120]">
       <Header
         userName={user.name}
         userEmoji={user.emoji}
@@ -73,20 +70,18 @@ export function SearchResults() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-8 pt-4 pb-16">
         <div className="mb-10">
-          <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">시맨틱 검색 결과</p>
-          <h1 className="text-gray-900 text-xl sm:text-2xl">"{query}"</h1>
+          <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">시맨틱 검색 결과</p>
+          <h1 className="text-white text-xl sm:text-2xl">"{query}"</h1>
         </div>
 
-        {/* 로딩 스피너 UI */}
         {isLoading ? (
           <div className="flex flex-col justify-center items-center py-32">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-indigo-600 mb-4"></div>
-            <span className="text-gray-600 font-medium">
+            <Loader2 className="h-12 w-12 animate-spin text-cyan-400 mb-4" />
+            <span className="text-slate-400">
               문맥을 분석하며 45,000개의 영화를 검색하고 있습니다...
             </span>
           </div>
         ) : (
-          /* 로딩 완료 시 데이터 렌더링 */
           <>
             <MovieCarousel
               title="1. TF-IDF (키워드 빈도 매칭)"

@@ -19,7 +19,7 @@ interface MovieResult {
   item_id?: number;
   title: string;
   similarity: number;
-  is_hit?: boolean; // 백엔드에서 주는 정답 여부 추가
+  is_hit?: boolean;
 }
 
 interface Metrics {
@@ -57,7 +57,7 @@ function MovieCard({
     const controller = new AbortController();
 
     const fetchPoster = async () => {
-      const fallbackUrl = `https://placehold.co/400x600/2d2d2d/ffffff?text=${encodeURIComponent(movie.title)}`;
+      const fallbackUrl = `https://placehold.co/400x600/111827/06b6d4?text=${encodeURIComponent(movie.title)}`;
 
       if (!TMDB_API_KEY) {
         setPosterUrl(fallbackUrl);
@@ -105,10 +105,9 @@ function MovieCard({
       transition={{ delay: idx * 0.08 }}
       className="relative w-40 flex-shrink-0 snap-start"
     >
-      <div className={`group relative h-60 overflow-hidden rounded-xl shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${movie.is_hit ? 'ring-4 ring-green-400 bg-green-50' : 'bg-gray-200'}`}>
-        {/* 정답 뱃지 추가 */}
+      <div className={`group relative h-60 overflow-hidden rounded-xl shadow-md shadow-black/30 transition-all hover:-translate-y-1 hover:shadow-xl ${movie.is_hit ? 'ring-4 ring-emerald-400 bg-emerald-900/20' : 'bg-slate-800'} border border-slate-700/50`}>
         {movie.is_hit && (
-          <div className="absolute left-2 top-2 z-10 rounded-md bg-green-500/90 px-2 py-1 text-xs font-bold text-white shadow-sm backdrop-blur-sm">
+          <div className="absolute left-2 top-2 z-10 rounded-md bg-emerald-500/90 px-2 py-1 text-xs text-white shadow-sm backdrop-blur-sm">
             HIT!
           </div>
         )}
@@ -120,15 +119,15 @@ function MovieCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-        <div className="absolute right-2 top-2 rounded-md border border-violet-300/40 bg-violet-600/90 px-2 py-1 text-xs font-bold text-white shadow-sm backdrop-blur-sm">
+        <div className="absolute right-2 top-2 rounded-md border border-cyan-400/30 bg-cyan-600/90 px-2 py-1 text-xs text-white shadow-sm backdrop-blur-sm">
           {movie.similarity.toFixed(1)}% {badgeLabel}
         </div>
         <div className="absolute bottom-0 left-0 w-full p-3">
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug text-white">
+          <h3 className="line-clamp-2 text-sm leading-snug text-white">
             {movie.title}
           </h3>
         </div>
@@ -137,7 +136,6 @@ function MovieCard({
   );
 }
 
-// 💡 새롭게 추가된 스크롤 로직 (좌우 버튼 포함)
 function MovieRow({
   movies,
   badgeLabel,
@@ -149,21 +147,19 @@ function MovieRow({
 
   const scroll = (dir: "left" | "right") => {
     if (!scrollRef.current) return;
-    const amount = dir === "left" ? -400 : 400; // 한 번에 넘어가는 너비
+    const amount = dir === "left" ? -400 : 400;
     scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
   };
 
   return (
     <div className="relative group/carousel">
-      {/* 왼쪽 화살표 */}
       <button
         onClick={() => scroll("left")}
-        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 opacity-0 shadow-md backdrop-blur-sm transition-opacity hover:bg-white group-hover/carousel:opacity-100"
+        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-slate-800/90 p-2 text-slate-300 opacity-0 shadow-md backdrop-blur-sm transition-opacity hover:bg-slate-700 hover:text-white group-hover/carousel:opacity-100 border border-slate-700/50"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
 
-      {/* 10개가 담기는 스크롤 영역 */}
       <div
         ref={scrollRef}
         className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4"
@@ -179,10 +175,9 @@ function MovieRow({
         ))}
       </div>
 
-      {/* 오른쪽 화살표 */}
       <button
         onClick={() => scroll("right")}
-        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 opacity-0 shadow-md backdrop-blur-sm transition-opacity hover:bg-white group-hover/carousel:opacity-100"
+        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-slate-800/90 p-2 text-slate-300 opacity-0 shadow-md backdrop-blur-sm transition-opacity hover:bg-slate-700 hover:text-white group-hover/carousel:opacity-100 border border-slate-700/50"
       >
         <ChevronRight className="h-6 w-6" />
       </button>
@@ -192,7 +187,7 @@ function MovieRow({
 
 function EmptyCarouselState({ title }: { title: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-violet-200 bg-white/70 px-6 py-10 text-center text-sm text-gray-500 shadow-sm">
+    <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-800/50 px-6 py-10 text-center text-sm text-slate-500 shadow-sm">
       {title} 결과가 아직 없습니다.
     </div>
   );
@@ -312,28 +307,27 @@ export function HomeDashboard() {
     caption: string,
     movies: MovieResult[],
     badgeLabel: string,
-    metrics?: Metrics | null // 추가된 파라미터
+    metrics?: Metrics | null
   ) => (
     <section className="mb-10">
       <div className="mb-4 flex flex-col gap-3 px-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-          <p className="mt-1 text-sm text-gray-500">{caption}</p>
+          <h3 className="text-white">{title}</h3>
+          <p className="mt-1 text-sm text-slate-500">{caption}</p>
         </div>
 
-        {/* 지표(Metrics)가 있을 경우 뱃지로 렌더링 */}
         {metrics && (
           <div className="flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 font-medium text-green-700 shadow-sm">
+            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-400 shadow-sm">
               🎯 정밀도: {metrics.precision_at_10}
             </span>
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 font-medium text-blue-700 shadow-sm">
+            <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-1 text-blue-400 shadow-sm">
               📊 NDCG: {metrics.ndcg_at_10}
             </span>
-            <span className="rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 font-medium text-purple-700 shadow-sm">
+            <span className="rounded-full border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-violet-400 shadow-sm">
               🌈 장르 다양성: {metrics.diversity}
             </span>
-            <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 font-medium text-orange-700 shadow-sm">
+            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-amber-400 shadow-sm">
               ⏱️ 추론 시간: {metrics.inference_ms}ms
             </span>
           </div>
@@ -350,17 +344,17 @@ export function HomeDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-violet-50 pb-20">
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 px-4 py-4 shadow-sm backdrop-blur-md">
+    <div className="min-h-screen bg-[#0B1120] pb-20">
+      <header className="sticky top-0 z-50 border-b border-slate-700/50 bg-[#0B1120]/80 px-4 py-4 shadow-sm backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="rounded-full p-2 transition-colors hover:bg-gray-100"
+              className="rounded-full p-2 transition-colors hover:bg-slate-800"
               aria-label="홈으로 돌아가기"
             >
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
+              <ArrowLeft className="h-5 w-5 text-slate-400" />
             </button>
 
             <div className="flex items-center gap-3">
@@ -368,21 +362,21 @@ export function HomeDashboard() {
                 {user.emoji}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">{user.name}의 홈</p>
-                <p className="text-xs text-gray-500">{user.label} 취향으로 추천을 불러왔어요</p>
+                <p className="text-sm text-white">{user.name}의 홈</p>
+                <p className="text-xs text-slate-500">{user.label} 취향으로 추천을 불러왔어요</p>
               </div>
             </div>
           </div>
 
           <form onSubmit={handleSearch} className="flex w-full max-w-2xl items-center gap-3">
             <div className="group relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-violet-500" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 transition-colors group-focus-within:text-cyan-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="ex: comedy movie about time travel"
-                className="w-full rounded-full border border-gray-200 bg-gray-100/60 py-2.5 pl-10 pr-4 text-sm text-gray-800 transition-all placeholder:text-gray-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                className="w-full rounded-full border border-slate-700 bg-slate-800/60 py-2.5 pl-10 pr-4 text-sm text-white transition-all placeholder:text-slate-500 focus:border-cyan-500/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
               />
             </div>
 
@@ -390,7 +384,7 @@ export function HomeDashboard() {
               type="submit"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-shadow hover:shadow-xl"
+              className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm text-white shadow-md shadow-cyan-500/20 transition-shadow hover:shadow-xl hover:shadow-cyan-500/30"
             >
               검색
             </motion.button>
@@ -401,7 +395,7 @@ export function HomeDashboard() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleClearSearch}
-                className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-600 shadow-sm transition-colors hover:border-violet-200 hover:text-violet-600"
+                className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-400 shadow-sm transition-colors hover:border-cyan-500/30 hover:text-cyan-400"
               >
                 <X className="h-4 w-4" />
                 초기화
@@ -417,26 +411,26 @@ export function HomeDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 grid gap-4 md:grid-cols-3"
         >
-          <div className="rounded-2xl border border-violet-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-500">추천 알고리즘</p>
-            <h2 className="mt-2 text-lg font-bold text-gray-900">CB, CF, NCF 비교</h2>
-            <p className="mt-2 text-sm leading-6 text-gray-600">
+          <div className="rounded-2xl border border-cyan-500/20 bg-[#111827]/80 p-5 shadow-sm backdrop-blur-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-400">추천 알고리즘</p>
+            <h2 className="mt-2 text-white">CB, CF, NCF 비교</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
               사용자 프로필, 협업 필터링, 딥러닝 추천을 한 화면에서 비교할 수 있어요.
             </p>
           </div>
-          <div className="rounded-2xl border border-indigo-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">시맨틱 검색</p>
-            <h2 className="mt-2 text-lg font-bold text-gray-900">TF-IDF, W2V, SBERT</h2>
-            <p className="mt-2 text-sm leading-6 text-gray-600">
+          <div className="rounded-2xl border border-blue-500/20 bg-[#111827]/80 p-5 shadow-sm backdrop-blur-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-blue-400">시맨틱 검색</p>
+            <h2 className="mt-2 text-white">TF-IDF, W2V, SBERT</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
               자연어 쿼리 하나로 키워드 중심부터 문맥 기반 검색까지 바로 체험합니다.
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">현재 모드</p>
-            <h2 className="mt-2 text-lg font-bold text-gray-900">
+          <div className="rounded-2xl border border-slate-700/50 bg-[#111827]/80 p-5 shadow-sm backdrop-blur-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">현재 모드</p>
+            <h2 className="mt-2 text-white">
               {isSearchMode ? "검색 결과 탐색 중" : `${user.name} 맞춤 추천`}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-gray-600">
+            <p className="mt-2 text-sm leading-6 text-slate-400">
               {isSearchMode
                 ? `"${searchQuery}"에 대한 알고리즘별 결과를 비교하고 있어요.`
                 : `${user.label} 취향을 기준으로 홈 추천을 불러왔어요.`}
@@ -445,23 +439,23 @@ export function HomeDashboard() {
         </motion.section>
 
         {isLoading ? (
-          <div className="flex h-72 flex-col items-center justify-center gap-4 text-gray-400">
-            <Loader2 className="h-9 w-9 animate-spin text-violet-500" />
+          <div className="flex h-72 flex-col items-center justify-center gap-4 text-slate-500">
+            <Loader2 className="h-9 w-9 animate-spin text-cyan-400" />
             <p className="text-sm">AI 모델이 영화 데이터를 분석하고 있습니다...</p>
           </div>
         ) : (
           <>
             {errorMessage ? (
-              <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-sm text-red-600 shadow-sm">
+              <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-400 shadow-sm">
                 {errorMessage}
               </div>
             ) : null}
 
             {isSearchMode ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
-                <div className="mb-6 flex items-center gap-2 px-1 text-violet-600">
+                <div className="mb-6 flex items-center gap-2 px-1 text-cyan-400">
                   <Sparkles className="h-5 w-5" />
-                  <h2 className="text-xl font-bold">"{searchQuery}" 분석 결과</h2>
+                  <h2 className="text-white">"{searchQuery}" 분석 결과</h2>
                 </div>
 
                 {renderCarousel("1. TF-IDF (키워드 빈도 매칭)", "키워드 중심의 가장 직관적인 매칭 방식", tfidfData, "일치")}
@@ -471,8 +465,8 @@ export function HomeDashboard() {
             ) : (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
                 <div className="mb-6 px-1">
-                  <h2 className="text-xl font-bold text-gray-900">{user.label}를 위한 맞춤 추천</h2>
-                  <p className="mt-1 text-sm text-gray-500">세 가지 추천 알고리즘 결과를 나란히 비교해보세요.</p>
+                  <h2 className="text-white">{user.label}를 위한 맞춤 추천</h2>
+                  <p className="mt-1 text-sm text-slate-500">세 가지 추천 알고리즘 결과를 나란히 비교해보세요.</p>
                 </div>
 
                 {renderCarousel("1. 콘텐츠 기반 (CB) 추천 Top 10", "좋아했던 영화의 속성과 닮은 작품을 찾아요", cbData, "유사도", cbMetrics)}
