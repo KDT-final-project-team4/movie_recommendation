@@ -19,12 +19,21 @@ interface MovieResult {
   item_id?: number;
   title: string;
   similarity: number;
+  is_hit?: boolean; // 백엔드에서 주는 정답 여부 추가
+}
+
+interface Metrics {
+  precision_at_10: number;
+  ndcg_at_10: number;
+  diversity: number;
+  inference_ms: number;
 }
 
 interface HomeRecommendationResponse {
-  cb_top5?: MovieResult[];
-  cf_top5?: MovieResult[];
-  ncf_top5?: MovieResult[];
+  target_genres?: string[];
+  cb_data?: { results: MovieResult[]; metrics: Metrics };
+  cf_data?: { results: MovieResult[]; metrics: Metrics };
+  ncf_data?: { results: MovieResult[]; metrics: Metrics };
 }
 
 interface SearchRecommendationResponse {
@@ -96,7 +105,13 @@ function MovieCard({
       transition={{ delay: idx * 0.08 }}
       className="relative w-40 flex-shrink-0 snap-start"
     >
-      <div className="group relative h-60 overflow-hidden rounded-xl bg-gray-200 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
+      <div className={`group relative h-60 overflow-hidden rounded-xl shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${movie.is_hit ? 'ring-4 ring-green-400 bg-green-50' : 'bg-gray-200'}`}>
+        {/* 정답 뱃지 추가 */}
+        {movie.is_hit && (
+          <div className="absolute left-2 top-2 z-10 rounded-md bg-green-500/90 px-2 py-1 text-xs font-bold text-white shadow-sm backdrop-blur-sm">
+            HIT!
+          </div>
+        )}
         {posterUrl ? (
           <img
             src={posterUrl}
@@ -197,6 +212,10 @@ export function HomeDashboard() {
   const [cfData, setCfData] = useState<MovieResult[]>([]);
   const [ncfData, setNcfData] = useState<MovieResult[]>([]);
 
+  const [cbMetrics, setCbMetrics] = useState<Metrics | null>(null);
+  const [cfMetrics, setCfMetrics] = useState<Metrics | null>(null);
+  const [ncfMetrics, setNcfMetrics] = useState<Metrics | null>(null);
+
   const [tfidfData, setTfidfData] = useState<MovieResult[]>([]);
   const [w2vData, setW2vData] = useState<MovieResult[]>([]);
   const [sbertData, setSbertData] = useState<MovieResult[]>([]);
@@ -219,9 +238,14 @@ export function HomeDashboard() {
         }
 
         const data: HomeRecommendationResponse = await response.json();
-        setCbData(data.cb_top5 ?? []);
-        setCfData(data.cf_top5 ?? []);
-        setNcfData(data.ncf_top5 ?? []);
+        setCbData(data.cb_data?.results ?? []);
+        setCbMetrics(data.cb_data?.metrics ?? null);
+
+        setCfData(data.cf_data?.results ?? []);
+        setCfMetrics(data.cf_data?.metrics ?? null);
+
+        setNcfData(data.ncf_data?.results ?? []);
+        setNcfMetrics(data.ncf_data?.metrics ?? null);
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -288,14 +312,34 @@ export function HomeDashboard() {
     caption: string,
     movies: MovieResult[],
     badgeLabel: string,
+    metrics?: Metrics | null // 추가된 파라미터
   ) => (
     <section className="mb-10">
-      <div className="mb-4 px-4">
-        <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-        <p className="mt-1 text-sm text-gray-500">{caption}</p>
+      <div className="mb-4 flex flex-col gap-3 px-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+          <p className="mt-1 text-sm text-gray-500">{caption}</p>
+        </div>
+
+        {/* 지표(Metrics)가 있을 경우 뱃지로 렌더링 */}
+        {metrics && (
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 font-medium text-green-700 shadow-sm">
+              🎯 정밀도: {metrics.precision_at_10}
+            </span>
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 font-medium text-blue-700 shadow-sm">
+              📊 NDCG: {metrics.ndcg_at_10}
+            </span>
+            <span className="rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 font-medium text-purple-700 shadow-sm">
+              🌈 장르 다양성: {metrics.diversity}
+            </span>
+            <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 font-medium text-orange-700 shadow-sm">
+              ⏱️ 추론 시간: {metrics.inference_ms}ms
+            </span>
+          </div>
+        )}
       </div>
       {movies.length > 0 ? (
-        // 💡 기존의 단순 div 대신, 좌우 화살표가 있는 MovieRow 컴포넌트를 사용합니다.
         <MovieRow movies={movies} badgeLabel={badgeLabel} />
       ) : (
         <div className="px-4">
@@ -431,9 +475,9 @@ export function HomeDashboard() {
                   <p className="mt-1 text-sm text-gray-500">세 가지 추천 알고리즘 결과를 나란히 비교해보세요.</p>
                 </div>
 
-                {renderCarousel("1. 콘텐츠 기반 (CB) 추천 Top 10", "좋아했던 영화의 속성과 닮은 작품을 찾아요", cbData, "유사도")}
-                {renderCarousel("2. 협업 필터링 (CF) 추천 Top 10", "비슷한 취향의 다른 사용자 패턴을 반영해요", cfData, "예상")}
-                {renderCarousel("3. Neural CF (딥러닝) 추천 Top 10", "신경망이 학습한 잠재 선호도를 기반으로 추천해요", ncfData, "적합")}
+                {renderCarousel("1. 콘텐츠 기반 (CB) 추천 Top 10", "좋아했던 영화의 속성과 닮은 작품을 찾아요", cbData, "유사도", cbMetrics)}
+                {renderCarousel("2. 협업 필터링 (CF) 추천 Top 10", "비슷한 취향의 다른 사용자 패턴을 반영해요", cfData, "예상", cfMetrics)}
+                {renderCarousel("3. Neural CF (딥러닝) 추천 Top 10", "신경망이 학습한 잠재 선호도를 기반으로 추천해요", ncfData, "적합", ncfMetrics)}
               </motion.div>
             )}
           </>

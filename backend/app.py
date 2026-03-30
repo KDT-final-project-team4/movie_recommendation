@@ -1,6 +1,7 @@
 import os
 import json
 import math
+import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -120,15 +121,28 @@ async def get_home_recommendations(user_id: str):
     # 정답지 로드
     target_genres = TARGET_GENRES.get(safe_user_id, ["Action"])
 
-    # 1. 알고리즘별 추천 결과 획득
+    # 🌟 1. 알고리즘별 추론 시간 측정 및 결과 획득
+    start_time = time.time()
     cb_raw = get_cb_data_recommend(mock_ratings, df_meta, top_n=10)
+    cb_time_ms = int((time.time() - start_time) * 1000)
+
+    start_time = time.time()
     cf_raw = get_cf_data_recommend(99999, mock_ratings, cf_matrix, df_meta, top_n=10) 
+    cf_time_ms = int((time.time() - start_time) * 1000)
+
+    start_time = time.time()
     ncf_raw = get_ncf_recommend(ncf_user_idx, processed_dir='data/processed', top_n=10)
+    ncf_time_ms = int((time.time() - start_time) * 1000)
 
     # 2. 실시간 성능 평가 실시
     cb_results, cb_metrics = evaluate_recommendations(cb_raw, target_genres, df_meta)
     cf_results, cf_metrics = evaluate_recommendations(cf_raw, target_genres, df_meta)
     ncf_results, ncf_metrics = evaluate_recommendations(ncf_raw, target_genres, df_meta)
+
+    # 🌟 3. 측정된 추론 시간을 metrics 객체에 병합
+    cb_metrics["inference_ms"] = cb_time_ms
+    cf_metrics["inference_ms"] = cf_time_ms
+    ncf_metrics["inference_ms"] = ncf_time_ms
 
     return {
         "user_id": user_id,
