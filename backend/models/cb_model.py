@@ -62,7 +62,7 @@ def get_cb_data_recommend(mock_user_ratings, df_meta, top_n=5):
 
 # [테스트 실행]
 if __name__ == "__main__":
-    df_meta = pd.read_pickle('backend\data\processed\movies_meta.pkl')
+    df_meta = pd.read_pickle('data/processed/movies_meta.pkl')
     
     # 가상 유저: 다크나이트(58559) 5점 만점, 매트릭스(2571) 4점
     mock_ratings = {58559: 5.0, 2571: 4.0}

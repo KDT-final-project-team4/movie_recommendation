@@ -5,7 +5,7 @@ import pickle
 import os
 
 class SBERTSearcher:
-    def __init__(self, processed_dir='./backend/data/processed'):
+    def __init__(self, processed_dir='data/processed'):
         self.meta_path = f'{processed_dir}/movies_meta.pkl'
         self.embeddings_path = f'{processed_dir}/sbert_embeddings.pkl'
         

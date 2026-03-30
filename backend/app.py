@@ -26,13 +26,13 @@ app.add_middleware(
 # 1. 전역 데이터 및 모델 로드 (서버 켤 때 딱 1번만 실행하여 속도 최적화)
 # ---------------------------------------------------------
 print("⏳ 서버 초기화 중... (데이터 및 AI 모델 로드)")
-df_meta = pd.read_pickle('backend\data\processed\movies_meta.pkl')
-cf_matrix = pd.read_pickle('backend\data\processed\cf_matrix.pkl')
+df_meta = pd.read_pickle('data/processed/movies_meta.pkl')
+cf_matrix = pd.read_pickle('data/processed/cf_matrix.pkl')
 
 # NLP 검색 모델 3대장 장전
-tfidf_searcher = TFIDFSearcher('backend\data\processed')
-w2v_searcher = Word2VecSearcher('backend\data\processed')
-sbert_searcher = SBERTSearcher('backend\data\processed')
+tfidf_searcher = TFIDFSearcher('data/processed')
+w2v_searcher = Word2VecSearcher('data/processed')
+sbert_searcher = SBERTSearcher('data/processed')
 print("✅ 서버 초기화 완료!")
 
 # ---------------------------------------------------------
@@ -73,7 +73,7 @@ async def get_home_recommendations(user_id: str):
     # 3대장 알고리즘 동시 가동
     cb_results = get_cb_data_recommend(mock_ratings, df_meta, top_n=5)
     cf_results = get_cf_data_recommend(99999, mock_ratings, cf_matrix, df_meta, top_n=5) 
-    ncf_results = get_ncf_recommend(ncf_user_idx, processed_dir='backend\data\processed', top_n=5)
+    ncf_results = get_ncf_recommend(ncf_user_idx, processed_dir='data/processed', top_n=5)
 
     return {
         "user_id": user_id,

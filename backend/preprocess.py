@@ -3,7 +3,7 @@ import numpy as np
 import ast
 import os
 
-def preprocess_all_data(raw_dir='./backend/data/raw', save_dir='./backend/data/processed'):
+def preprocess_all_data(raw_dir='data/raw', save_dir='data/processed'):
     print("🚀 통합 데이터 전처리를 시작합니다... (전통적 추천 + 의미론적 검색)")
 
     # 1. 원본 데이터 로드 (메모리 최적화를 위해 필수 컬럼만 지정)

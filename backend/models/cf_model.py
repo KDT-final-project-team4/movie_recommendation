@@ -63,8 +63,8 @@ def get_cf_data_recommend(mock_user_id, mock_user_ratings, cf_matrix, df_meta, t
 
 # [테스트 실행]
 if __name__ == "__main__":
-    df_meta = pd.read_pickle('backend\data\processed\movies_meta.pkl')
-    cf_matrix = pd.read_pickle('backend\data\processed\cf_matrix.pkl')
+    df_meta = pd.read_pickle('data/processed/movies_meta.pkl')
+    cf_matrix = pd.read_pickle('data/processed/cf_matrix.pkl')
     
     # 가상 유저 9999번 (SF/액션 덕후: 인셉션, 매트릭스 5점 만점)
     mock_id = 9999

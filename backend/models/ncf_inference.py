@@ -8,7 +8,7 @@ try:
 except ModuleNotFoundError:
     from ncf_network import NCFModel
 
-def get_ncf_recommend(mapped_user_idx, processed_dir='./backend/data/processed', top_n=5):
+def get_ncf_recommend(mapped_user_idx, processed_dir='data/processed', top_n=5):
     """
     [NCF 추천] 가상 유저와 매핑된 실제 user_idx를 받아 딥러닝 예측 평점이 가장 높은 영화를 반환합니다.
     """

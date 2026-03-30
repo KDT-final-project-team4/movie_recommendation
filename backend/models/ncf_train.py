@@ -19,7 +19,7 @@ class MovieDataset(Dataset):
     def __getitem__(self, idx):
         return self.users[idx], self.items[idx], self.ratings[idx]
 
-def train_ncf(processed_dir='./backend/data/processed'):
+def train_ncf(processed_dir='data/processed'):
     print("⏳ NCF 모델 학습을 준비합니다. (과적합 방지 로직 적용)")
     df = pd.read_pickle(f'{processed_dir}/ncf_data.pkl')
     

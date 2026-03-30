@@ -7,7 +7,7 @@ import pickle
 import os
 
 class Word2VecSearcher:
-    def __init__(self, processed_dir='./backend/data/processed'):
+    def __init__(self, processed_dir='data/processed'):
         self.meta_path = f'{processed_dir}/movies_meta.pkl'
         self.w2v_model_path = f'{processed_dir}/w2v_model.model'
         self.doc_vectors_path = f'{processed_dir}/w2v_doc_vectors.pkl'

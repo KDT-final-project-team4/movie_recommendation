@@ -5,7 +5,7 @@ import pickle
 import os
 
 class TFIDFSearcher:
-    def __init__(self, processed_dir='./backend/data/processed'):
+    def __init__(self, processed_dir='data/processed'):
         self.meta_path = f'{processed_dir}/movies_meta.pkl'
         self.model_path = f'{processed_dir}/tfidf_matrix.pkl'
         self.vectorizer_path = f'{processed_dir}/tfidf_vectorizer.pkl'
