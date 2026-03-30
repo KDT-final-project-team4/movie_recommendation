@@ -70,3 +70,23 @@ npm install
 npm run dev
 ```
 > 브라우저에서 `http://localhost:5173`으로 접속하여 테스트할 수 있습니다.
+---
+
+## 💡 Key Engineering Insights (프로젝트 핵심 발견)
+
+본 프로젝트는 단순한 추천 시스템 구현을 넘어, 전통적인 레거시 모델과 최신 딥러닝 모델의 트레이드오프(Trade-off)를 정량적으로 분석했습니다.
+
+### 1. 하이브리드 데이터셋 병합 및 OOM 최적화
+- **Kaggle TMDB 메타데이터**(4.5만 건)와 **MovieLens 평점 데이터**(2,600만 건)를 `links.csv`를 통해 ID 매핑하여 이종(Hybrid) 데이터 파이프라인을 구축했습니다.
+- 로컬 환경 연산 시 발생하는 Sparse Matrix의 **OOM(Out Of Memory) 한계를 방지**하고 알고리즘 대조의 민첩성을 확보하기 위해, 평점 데이터를 10만 건(`ratings_small.csv`)으로 서브샘플링하는 엔지니어링적 결정을 내렸습니다.
+
+### 2. 딥러닝(NCF)의 역설과 데이터 희소성 증명
+- 10만 건의 데이터 환경에서 NCF(Neural Collaborative Filtering) 모델의 정밀도가 CF 모델보다 낮게 도출되었습니다. 
+- 이는 실패가 아닌 **'데이터 희소성(Sparsity)' 문제의 실증적 증명**으로, Cold Start 상황이나 소규모 데이터셋에서는 전통적 CF가 딥러닝보다 효율적일 수 있음을 확인했습니다.
+
+### 3. AI 시맨틱 검색의 편향성 발견 및 레거시의 재평가
+- **SBERT의 Obscurity Bias(마이너 편향):** "adventure with dinosaurs" 검색 시 문맥은 파악했으나 대중성 지표(Vote Count) 부재로 <쥬라기 공원> 대신 B급 영화를 상위 노출하는 맹점을 발견했습니다.
+- **TF-IDF의 역습:** "animation with emotions" 검색 시 SBERT가 추상적 예술 영화를 띄운 반면, 구식 모델인 TF-IDF가 고유 키워드를 타격해 <인사이드 아웃>을 정확히 찾아내는 역설을 확인했습니다.
+
+### 4. 차세대 아키텍처 제안
+- 완벽한 단일 모델은 존재하지 않음을 확인하고, SBERT(Dense)와 TF-IDF(Sparse)를 결합한 **하이브리드 검색 앙상블** 및 대중성 기반 **비즈니스 랭킹 로직 추가**를 최종 해결책으로 도출했습니다.
