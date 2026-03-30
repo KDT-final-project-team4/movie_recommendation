@@ -776,53 +776,39 @@ function Slide14() {
 
 function Slide15() {
   return (
-    <SlideLayout
-      icon={<Sparkles className={`w-6 h-6 ${ACCENT_TEXT}`} />}
-      title="최종 결론 (Conclusion)"
-      subtitle="Slide 15 · Hybrid Architecture"
-    >
+    <SlideLayout icon={<Database className={`w-6 h-6 ${ACCENT_TEXT}`} />} title="최종 결론: 데이터의 본질과 하이브리드 아키텍처" subtitle="Slide 15 · Conclusion">
       <div className="flex flex-col h-full justify-between py-2">
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5">
-            <div className="text-cyan-300 text-xs font-bold mb-2 flex items-center gap-1.5">
-              <Combine className="w-3.5 h-3.5" /> 하이브리드 검색 (Sparse + Dense)
+          <div className="p-4 border border-cyan-500/20 bg-cyan-500/5 rounded-xl text-center">
+            <div className="text-cyan-400 text-sm font-bold mb-2 flex items-center justify-center gap-1.5">
+              <Combine className="w-4 h-4" /> 1. 하이브리드 아키텍처 구성
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              SBERT의 깊은 문맥 이해력과 TF-IDF의 고유명사 타격률을 결합(Ensemble)하여 단일 모델이 가진 고질적인 맹점을 상호 보완합니다.
+              SBERT의 문맥 이해력과 TF-IDF의 키워드 타격률을 결합하고 대중성 가중치를 부여해 단일 모델의 맹점을 보완하는 시스템 설계는 필수적입니다.
             </p>
           </div>
-          <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
-            <div className="text-emerald-300 text-xs font-bold mb-2 flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5" /> 비즈니스 랭킹 로직 결합
+          <div className="p-4 border border-emerald-500/30 bg-emerald-500/10 rounded-xl text-center shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+            <div className="text-emerald-400 text-sm font-bold mb-2 flex items-center justify-center gap-1.5">
+              <Database className="w-4 h-4" /> 2. 양질의 데이터 확보 (핵심)
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              단순 수학적 유사도를 넘어, 평점 및 투표수 가중치를 부여함으로써 마이너 취향 편향을 억제하고 실서비스 수준의 품질을 확보합니다.
+            <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
+              하지만 이 모든 아키텍처 설계보다 선행되어야 하는 것은 '데이터'입니다. 노이즈 없는 정교한 텍스트와 상호작용 데이터가 뒷받침되지 않으면 어떤 최신 모델도 제 성능을 낼 수 없습니다.
             </p>
           </div>
         </div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="text-center space-y-4 my-8"
-        >
-          <div className="inline-block px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold mb-2 tracking-wide">
+        <div className="text-center my-6 space-y-4">
+          <div className="inline-block px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold tracking-wide">
             Final Insight
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
-            "중요한 것은 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">어떤 알고리즘</span>이냐가 아니라,<br/>
-            어떻게 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">데이터를 엮어 가치를 전달</span>하느냐입니다."
+            "알고리즘을 엮는 <span className={`bg-gradient-to-r ${ACCENT} bg-clip-text text-transparent`}>하이브리드 설계</span>도 중요하지만,<br/>
+            그 한계를 짓는 것은 결국 <span className="text-emerald-400">데이터의 양과 질</span>입니다."
           </h2>
-          <p className="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto leading-relaxed mt-4">
-            알고리즘은 도구일 뿐입니다. 도메인에 대한 깊은 이해를 바탕으로 <br/>
-            모델의 한계를 시스템으로 보완하는 설계 능력이 엔지니어링의 본질입니다.
-          </p>
-        </motion.div>
-
+          <p className="text-xs text-slate-400">모델의 파라미터 튜닝보다, 데이터 전처리와 품질 관리에 더 깊이 고민하는 엔지니어가 되겠습니다.</p>
+        </div>
         <div className="text-center pt-4 border-t border-slate-800/50 mt-auto">
-          <p className="text-lg font-bold text-slate-200 mb-1">감사합니다</p>
-          <p className="text-xs text-slate-500">Q&A 및 피드백 부탁드립니다.</p>
+          <p className="text-sm font-bold text-slate-200">감사합니다</p>
+          <p className="text-[10px] text-slate-500">Q&A 및 피드백</p>
         </div>
       </div>
     </SlideLayout>
