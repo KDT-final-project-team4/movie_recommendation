@@ -188,16 +188,16 @@ function Slide1() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="relative z-10 text-center px-8">
         <SlideTag><Sparkles className="w-3.5 h-3.5" />AI Portfolio Presentation</SlideTag>
         <h1 className={`${HEADING_TEXT} text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.15] mt-8 mb-6`}>
-          진화하는 추천 시스템,
+          영화 추천 및 검색 알고리즘
           <br />
           <span className={`bg-gradient-to-r ${ACCENT} bg-clip-text text-transparent`}>
-            레거시와 AI의 교차점 검증
+            성능 비교 분석
           </span>
         </h1>
         <p className={`${SUBTLE_TEXT} text-base sm:text-lg max-w-2xl mx-auto leading-relaxed`}>
-          "최신 딥러닝 모델이 항상 최선의 결과(UX)를 보장하는가?"
+          최신 딥러닝 기술과 전통적 알고리즘의 대조군 실험을 통한
           <br />
-          추천 알고리즘(CB, CF, NCF)과 검색 알고리즘(TF-IDF, Word2Vec, SBERT)의 정량적 대조군 분석
+          추천 정밀도 및 시맨틱 검색 효율성 검증
         </p>
       </motion.div>
 
@@ -229,7 +229,7 @@ function Slide2() {
               <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 pl-1 font-bold">추천 (Recommendation)</div>
               <div className="grid grid-cols-3 gap-3">
                 <FlowNode label="CB" sub="아이템 메타데이터" color="amber" />
-                <FlowNode label="CF" sub="집단지성 행렬분해" color="blue" />
+                <FlowNode label="CF" sub="이웃 유저 패턴 기반" color="blue" />
                 <FlowNode label="NCF" sub="비선형 신경망" color="cyan" />
               </div>
             </div>
@@ -248,7 +248,7 @@ function Slide2() {
             추천과 검색 기술의 세대별 한계를 교차 검증하기 위해 각 계보의 대표 알고리즘 6가지를 선정
           </InfoCard>
           <InfoCard icon={<Layers className="w-4 h-4 text-amber-400" />} title="추천의 진화" delay={0.2} accent="amber">
-            아이템 속성(CB) → 유저 집단지성(CF) → 비선형 패턴(NCF)으로의 발전 흐름 비교
+            아이템 속성(CB) → 이웃 유저 패턴 기반(CF) → 비선형 패턴(NCF)으로의 발전 흐름 비교
           </InfoCard>
           <InfoCard icon={<Search className="w-4 h-4 text-blue-400" />} title="검색의 진화" delay={0.3} accent="blue">
             단어 빈도(TF-IDF) → 단어 의미(Word2Vec) → 문맥 이해(SBERT)로의 진화 한계 측정
@@ -269,7 +269,7 @@ function Slide3() {
     >
       <div className="grid lg:grid-cols-2 gap-6 h-full items-center mt-4">
         <DiagramBox className="!p-5">
-          <p className={`text-xs font-bold uppercase tracking-wider ${ACCENT_TEXT} mb-4 text-center`}>TMDB Movie Metadata</p>
+          <p className={`text-xs font-bold uppercase tracking-wider ${ACCENT_TEXT} mb-4 text-center`}>The Movies Dataset</p>
           <div className="w-full text-xs text-slate-300 bg-slate-900/50 rounded-lg overflow-hidden border border-slate-700">
             <div className="grid grid-cols-4 bg-slate-800 p-2 font-bold text-slate-400">
               <div>movieId</div><div>title</div><div>genres</div><div>overview</div>
@@ -293,7 +293,7 @@ function Slide3() {
           </div>
         </DiagramBox>
         <div className="flex flex-col gap-4">
-          <InfoCard icon={<Table className="w-4 h-4 text-cyan-400" />} title="데이터 출처: Kaggle TMDB Dataset" delay={0.1}>
+          <InfoCard icon={<Table className="w-4 h-4 text-cyan-400" />} title="데이터 출처: Kaggle, The Movies Dataset" delay={0.1}>
             전 세계 영화 메타데이터 4.5만 건을 베이스로 활용
           </InfoCard>
           <InfoCard icon={<Cpu className="w-4 h-4 text-blue-400" />} title="엔지니어링 결정: Small Subset 활용" delay={0.2} accent="blue">

@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import { MOCK_USERS } from "./mock-data";
 
+
 const API_BASE_URL = "http://localhost:8000";
-const TMDB_API_KEY = "e09c219ee2f65785903927c06736c057";
+const TMDB_API_KEY = (import.meta as any).env.VITE_TMDB_API_KEY;
 
 interface MovieResult {
   item_id?: number;
