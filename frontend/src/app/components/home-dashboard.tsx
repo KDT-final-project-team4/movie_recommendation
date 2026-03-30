@@ -37,9 +37,9 @@ interface HomeRecommendationResponse {
 }
 
 interface SearchRecommendationResponse {
-  tfidf_top5?: MovieResult[];
-  w2v_top5?: MovieResult[];
-  sbert_top5?: MovieResult[];
+  tfidf_results?: MovieResult[];
+  w2v_results?: MovieResult[];
+  sbert_results?: MovieResult[];
 }
 
 function MovieCard({
@@ -291,9 +291,9 @@ export function HomeDashboard() {
       }
 
       const data: SearchRecommendationResponse = await response.json();
-      setTfidfData(data.tfidf_top5 ?? []);
-      setW2vData(data.w2v_top5 ?? []);
-      setSbertData(data.sbert_top5 ?? []);
+      setTfidfData(data.tfidf_results ?? []);
+      setW2vData(data.w2v_results ?? []);
+      setSbertData(data.sbert_results ?? []);
     } catch (error) {
       setErrorMessage("검색 결과를 불러오지 못했습니다. 백엔드 서버 상태를 확인해주세요.");
     } finally {
@@ -464,9 +464,9 @@ export function HomeDashboard() {
                   <h2 className="text-xl font-bold">"{searchQuery}" 분석 결과</h2>
                 </div>
 
-                {renderCarousel("1. TF-IDF + Cosine", "키워드 중심의 가장 직관적인 매칭 방식", tfidfData, "일치")}
-                {renderCarousel("2. Word2Vec", "단어 의미 벡터 평균으로 유사 작품 탐색", w2vData, "매칭")}
-                {renderCarousel("3. Sentence-BERT", "문장 전체 문맥을 이해하는 고성능 검색", sbertData, "적합")}
+                {renderCarousel("1. TF-IDF (키워드 빈도 매칭)", "키워드 중심의 가장 직관적인 매칭 방식", tfidfData, "일치")}
+                {renderCarousel("2. Word2Vec (단어 의미 벡터 평균)", "단어 의미 벡터 평균으로 유사 작품 탐색", w2vData, "매칭")}
+                {renderCarousel("3. Sentence-BERT (문맥 이해 검색)", "문장 전체 문맥을 이해하는 고성능 검색", sbertData, "적합")}
               </motion.div>
             ) : (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
