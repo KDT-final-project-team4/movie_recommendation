@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Sparkles, Play, Film, Star, TrendingUp } from "lucide-react";
+import { Sparkles, Play, Film, Star, TrendingUp, Presentation } from "lucide-react";
 import { MOCK_USERS, POSTERS } from "./mock-data";
 
 const FEATURED_POSTERS = POSTERS.slice(0, 8);
@@ -138,6 +138,23 @@ export function UserSelect() {
               </motion.button>
             ))}
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.0 }}
+            className="mt-10 flex justify-center"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/slides")}
+              className="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-indigo-500 text-white px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition-shadow text-sm"
+            >
+              <Presentation className="w-4 h-4" />
+              알고리즘 소개 보기
+            </motion.button>
+          </motion.div>
         </div>
       </section>
 
