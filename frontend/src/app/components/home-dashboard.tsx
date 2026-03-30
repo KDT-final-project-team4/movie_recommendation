@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -7,6 +7,8 @@ import {
   Search,
   Sparkles,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { MOCK_USERS } from "./mock-data";
 
@@ -117,6 +119,59 @@ function MovieCard({
         </div>
       </div>
     </motion.article>
+  );
+}
+
+// 💡 새롭게 추가된 스크롤 로직 (좌우 버튼 포함)
+function MovieRow({
+  movies,
+  badgeLabel,
+}: {
+  movies: MovieResult[];
+  badgeLabel: string;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (dir: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const amount = dir === "left" ? -400 : 400; // 한 번에 넘어가는 너비
+    scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative group/carousel">
+      {/* 왼쪽 화살표 */}
+      <button
+        onClick={() => scroll("left")}
+        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 opacity-0 shadow-md backdrop-blur-sm transition-opacity hover:bg-white group-hover/carousel:opacity-100"
+      >
+        <ChevronLeft className="h-6 w-6" />
+      </button>
+
+      {/* 10개가 담기는 스크롤 영역 */}
+      <div
+        ref={scrollRef}
+        className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {movies.map((movie, idx) => (
+          <MovieCard
+            key={`${movie.item_id ?? movie.title}-${idx}`}
+            movie={movie}
+            badgeLabel={badgeLabel}
+            idx={idx}
+          />
+        ))}
+      </div>
+
+      {/* 오른쪽 화살표 */}
+      <button
+        onClick={() => scroll("right")}
+        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 opacity-0 shadow-md backdrop-blur-sm transition-opacity hover:bg-white group-hover/carousel:opacity-100"
+      >
+        <ChevronRight className="h-6 w-6" />
+      </button>
+    </div>
   );
 }
 
@@ -240,16 +295,8 @@ export function HomeDashboard() {
         <p className="mt-1 text-sm text-gray-500">{caption}</p>
       </div>
       {movies.length > 0 ? (
-        <div className="hide-scrollbar flex snap-x gap-4 overflow-x-auto px-4 pb-4">
-          {movies.map((movie, idx) => (
-            <MovieCard
-              key={`${movie.item_id ?? movie.title}-${idx}`}
-              movie={movie}
-              badgeLabel={badgeLabel}
-              idx={idx}
-            />
-          ))}
-        </div>
+        // 💡 기존의 단순 div 대신, 좌우 화살표가 있는 MovieRow 컴포넌트를 사용합니다.
+        <MovieRow movies={movies} badgeLabel={badgeLabel} />
       ) : (
         <div className="px-4">
           <EmptyCarouselState title={title} />
@@ -384,9 +431,9 @@ export function HomeDashboard() {
                   <p className="mt-1 text-sm text-gray-500">세 가지 추천 알고리즘 결과를 나란히 비교해보세요.</p>
                 </div>
 
-                {renderCarousel("1. 콘텐츠 기반 (CB) 추천 Top 5", "좋아했던 영화의 속성과 닮은 작품을 찾아요", cbData, "유사도")}
-                {renderCarousel("2. 협업 필터링 (CF) 추천 Top 5", "비슷한 취향의 다른 사용자 패턴을 반영해요", cfData, "예상")}
-                {renderCarousel("3. Neural CF (딥러닝) 추천 Top 5", "신경망이 학습한 잠재 선호도를 기반으로 추천해요", ncfData, "적합")}
+                {renderCarousel("1. 콘텐츠 기반 (CB) 추천 Top 10", "좋아했던 영화의 속성과 닮은 작품을 찾아요", cbData, "유사도")}
+                {renderCarousel("2. 협업 필터링 (CF) 추천 Top 10", "비슷한 취향의 다른 사용자 패턴을 반영해요", cfData, "예상")}
+                {renderCarousel("3. Neural CF (딥러닝) 추천 Top 10", "신경망이 학습한 잠재 선호도를 기반으로 추천해요", ncfData, "적합")}
               </motion.div>
             )}
           </>

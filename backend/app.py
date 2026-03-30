@@ -40,20 +40,16 @@ print("✅ 서버 초기화 완료!")
 # ---------------------------------------------------------
 # 프론트엔드에서 'alex', 'Alex', 'action' 등 어떤 형태로 넘어와도 방어할 수 있도록 키값을 넉넉하게 세팅합니다.
 MOCK_USER_PROFILES = {
-    # 1. 액션 매니아 (다크나이트, 매드맥스, 매트릭스, 레이더스, 브레이브하트)
-    "alex": {"ratings": {58559: 5.0, 122886: 4.5, 2571: 5.0, 1198: 4.5, 110: 4.0}, "mapped_ncf_user_idx": 10},
+    # 1. Alex (액션 매니아) - ID: action
     "action": {"ratings": {58559: 5.0, 122886: 4.5, 2571: 5.0, 1198: 4.5, 110: 4.0}, "mapped_ncf_user_idx": 10},
     
-    # 2. 로맨틱 코미디 팬 (어바웃 타임, 노팅힐, 포레스트 검프, 타이타닉, 당신이 잠든 사이에)
-    "jamie": {"ratings": {104374: 5.0, 2671: 5.0, 356: 4.5, 1721: 4.5, 339: 4.0}, "mapped_ncf_user_idx": 20},
+    # 2. Jamie (로코 팬) - ID: romcom
     "romcom": {"ratings": {104374: 5.0, 2671: 5.0, 356: 4.5, 1721: 4.5, 339: 4.0}, "mapped_ncf_user_idx": 20},
     
-    # 3. SF/판타지 덕후 (인터스텔라, 매트릭스, 스타워즈 에피소드4, 백투더퓨처, 터미네이터2)
-    "sam": {"ratings": {109487: 5.0, 2571: 5.0, 260: 4.5, 1270: 5.0, 1240: 4.5}, "mapped_ncf_user_idx": 30},
+    # 3. Morgan (SF 덕후) - ID: scifi
     "scifi": {"ratings": {109487: 5.0, 2571: 5.0, 260: 4.5, 1270: 5.0, 1240: 4.5}, "mapped_ncf_user_idx": 30},
     
-    # 4. 호러/스릴러 매니아 (컨저링, 쏘우, 식스 센스, 양들의 침묵, 샤이닝)
-    "morgan": {"ratings": {103141: 5.0, 8665: 4.0, 2762: 4.5, 593: 5.0, 1258: 4.5}, "mapped_ncf_user_idx": 40},
+    # 4. Riley (호러 팬) - ID: horror
     "horror": {"ratings": {103141: 5.0, 8665: 4.0, 2762: 4.5, 593: 5.0, 1258: 4.5}, "mapped_ncf_user_idx": 40}
 }
 
@@ -62,18 +58,17 @@ MOCK_USER_PROFILES = {
 # ---------------------------------------------------------
 @app.get("/api/recommend/home/{user_id}")
 async def get_home_recommendations(user_id: str):
-    # 프론트엔드에서 대문자(Alex)로 넘어올 수 있으므로 전부 소문자로 강제 변환
+    # 프론트에서 넘어온 user_id가 소문자인지 확실히 하고, 없으면 "action"을 기본값으로 사용
     safe_user_id = user_id.lower()
+    profile = MOCK_USER_PROFILES.get(safe_user_id, MOCK_USER_PROFILES["action"])
     
-    # 딕셔너리에 없는 이상한 유저가 넘어오면 기본값(alex) 부여
-    profile = MOCK_USER_PROFILES.get(safe_user_id, MOCK_USER_PROFILES["alex"])
     mock_ratings = profile["ratings"]
     ncf_user_idx = profile["mapped_ncf_user_idx"]
 
-    # 3대장 알고리즘 동시 가동
-    cb_results = get_cb_data_recommend(mock_ratings, df_meta, top_n=5)
-    cf_results = get_cf_data_recommend(99999, mock_ratings, cf_matrix, df_meta, top_n=5) 
-    ncf_results = get_ncf_recommend(ncf_user_idx, processed_dir='data/processed', top_n=5)
+    # 3대장 알고리즘 동시 가동 (top_n 10개 유지)
+    cb_results = get_cb_data_recommend(mock_ratings, df_meta, top_n=10)
+    cf_results = get_cf_data_recommend(99999, mock_ratings, cf_matrix, df_meta, top_n=10) 
+    ncf_results = get_ncf_recommend(ncf_user_idx, processed_dir='data/processed', top_n=10)
 
     return {
         "user_id": user_id,
@@ -92,10 +87,10 @@ class SearchRequest(BaseModel):
 async def get_semantic_search(request: SearchRequest):
     query = request.query
 
-    # NLP 3대장 알고리즘 동시 가동
-    tfidf_results = tfidf_searcher.search(query, top_n=5)
-    w2v_results = w2v_searcher.search(query, top_n=5)
-    sbert_results = sbert_searcher.search(query, top_n=5)
+    # NLP 3대장 알고리즘 동시 가동 (top_n을 10으로 상향 조정)
+    tfidf_results = tfidf_searcher.search(query, top_n=10)
+    w2v_results = w2v_searcher.search(query, top_n=10)
+    sbert_results = sbert_searcher.search(query, top_n=10)
 
     return {
         "query": query,
