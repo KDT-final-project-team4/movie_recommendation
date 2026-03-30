@@ -153,6 +153,47 @@ async def get_home_recommendations(user_id: str):
     }
 
 # ---------------------------------------------------------
+# 5. 시맨틱 검색 전용 정답지 및 평가 로직
+# ---------------------------------------------------------
+SEARCH_GROUND_TRUTH = {
+    # 1. Romance(장르) + 시간여행(키워드)
+    "romance with time travel": [
+        "about time", "the time traveler's wife", "somewhere in time", "the lovers"
+    ],
+    # 2. Adventure(장르) + 공룡(키워드)
+    "adventure with dinosaurs": [
+        "jurassic park", "jurassic world"
+    ],
+    # 3. Animation(장르) + 감정들(키워드)
+    "animation with emotions": [
+        "inside out"
+    ]
+}
+
+def evaluate_search_results(results, query):
+    """검색 결과를 정답지와 비교하여 MRR과 Hit@10을 계산합니다."""
+    query_lower = query.lower().strip()
+    targets = SEARCH_GROUND_TRUTH.get(query_lower, [])
+    
+    if not targets or not results:
+        return results, {"mrr": 0.0, "hit_at_10": 0}
+
+    mrr = 0.0
+    hits = 0
+    
+    for i, res in enumerate(results):
+        title = res.get('title', '').lower()
+        is_hit = any(t in title for t in targets)
+        res['is_hit'] = is_hit
+        
+        if is_hit:
+            hits += 1
+            if mrr == 0.0: 
+                mrr = 1.0 / (i + 1)
+
+    return results, {"mrr": round(mrr, 2), "hit_at_10": hits}
+
+# ---------------------------------------------------------
 # 5. API 엔드포인트: 의미론적 검색 (기본 유지)
 # ---------------------------------------------------------
 class SearchRequest(BaseModel):
@@ -162,15 +203,34 @@ class SearchRequest(BaseModel):
 async def get_semantic_search(request: SearchRequest):
     query = request.query
 
-    tfidf_results = tfidf_searcher.search(query, top_n=10)
-    w2v_results = w2v_searcher.search(query, top_n=10)
-    sbert_results = sbert_searcher.search(query, top_n=10)
+    # 1. 알고리즘별 추론 시간 측정 및 결과 획득
+    start_time = time.time()
+    tfidf_raw = tfidf_searcher.search(query, top_n=10)
+    tfidf_time_ms = int((time.time() - start_time) * 1000)
+
+    start_time = time.time()
+    w2v_raw = w2v_searcher.search(query, top_n=10)
+    w2v_time_ms = int((time.time() - start_time) * 1000)
+
+    start_time = time.time()
+    sbert_raw = sbert_searcher.search(query, top_n=10)
+    sbert_time_ms = int((time.time() - start_time) * 1000)
+
+    # 2. 정답지를 바탕으로 실시간 평가 실시
+    tfidf_results, tfidf_metrics = evaluate_search_results(tfidf_raw, query)
+    w2v_results, w2v_metrics = evaluate_search_results(w2v_raw, query)
+    sbert_results, sbert_metrics = evaluate_search_results(sbert_raw, query)
+
+    # 3. 측정된 추론 시간을 metrics에 병합
+    tfidf_metrics["inference_ms"] = tfidf_time_ms
+    w2v_metrics["inference_ms"] = w2v_time_ms
+    sbert_metrics["inference_ms"] = sbert_time_ms
 
     return {
         "query": query,
-        "tfidf_results": tfidf_results,
-        "w2v_results": w2v_results,
-        "sbert_results": sbert_results
+        "tfidf_data": {"results": tfidf_results, "metrics": tfidf_metrics},
+        "w2v_data": {"results": w2v_results, "metrics": w2v_metrics},
+        "sbert_data": {"results": sbert_results, "metrics": sbert_metrics}
     }
 
 if __name__ == "__main__":

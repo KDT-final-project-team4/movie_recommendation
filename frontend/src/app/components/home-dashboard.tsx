@@ -37,9 +37,9 @@ interface HomeRecommendationResponse {
 }
 
 interface SearchRecommendationResponse {
-  tfidf_results?: MovieResult[];
-  w2v_results?: MovieResult[];
-  sbert_results?: MovieResult[];
+  tfidf_data?: { results: MovieResult[]; metrics: any };
+  w2v_data?: { results: MovieResult[]; metrics: any };
+  sbert_data?: { results: MovieResult[]; metrics: any };
 }
 
 function MovieCard({
@@ -291,9 +291,9 @@ export function HomeDashboard() {
       }
 
       const data: SearchRecommendationResponse = await response.json();
-      setTfidfData(data.tfidf_results ?? []);
-      setW2vData(data.w2v_results ?? []);
-      setSbertData(data.sbert_results ?? []);
+      setTfidfData(data.tfidf_data?.results ?? []);
+      setW2vData(data.w2v_data?.results ?? []);
+      setSbertData(data.sbert_data?.results ?? []);
     } catch (error) {
       setErrorMessage("검색 결과를 불러오지 못했습니다. 백엔드 서버 상태를 확인해주세요.");
     } finally {
