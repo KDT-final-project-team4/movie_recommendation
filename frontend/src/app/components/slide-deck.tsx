@@ -29,6 +29,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
+  GitBranch,
 } from "lucide-react";
 
 /* ════════════════ THEME CONSTANTS ════════════════ */
@@ -178,10 +179,71 @@ function Slide1() {
   );
 }
 
+function Slide1_5() {
+  return (
+    <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
+      <SectionTitle tag="Slide 2 · Taxonomy" title="세대별 대표 알고리즘의 선정" />
+      <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
+        <DiagramBox>
+          <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-5`}>세대별 발전 계보</p>
+          <div className="w-full space-y-4">
+            {/* Generation headers */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="px-2 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] uppercase tracking-wider">1세대</div>
+              <div className="px-2 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[10px] uppercase tracking-wider">2세대</div>
+              <div className="px-2 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] uppercase tracking-wider">3세대</div>
+            </div>
+            {/* Recommendation row */}
+            <div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 pl-1">추천 (Recommendation)</div>
+              <div className="grid grid-cols-3 gap-3">
+                <FlowNode label="CB" sub="아이템 메타데이터" color="amber" />
+                <FlowNode label="CF" sub="집단지성 행렬분해" color="blue" />
+                <FlowNode label="NCF" sub="비선형 신경망" color="cyan" />
+              </div>
+              <div className="flex items-center justify-center gap-0 mt-1">
+                <div className="flex-1 h-[1px] bg-gradient-to-r from-amber-500/40 via-blue-500/40 to-cyan-500/40" />
+                <ArrowRight className="w-3.5 h-3.5 text-cyan-500/50 flex-shrink-0" />
+              </div>
+            </div>
+            {/* Search row */}
+            <div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 pl-1">검색 (Search)</div>
+              <div className="grid grid-cols-3 gap-3">
+                <FlowNode label="TF-IDF" sub="키워드 빈도" color="amber" />
+                <FlowNode label="Word2Vec" sub="단어 좌표화" color="blue" />
+                <FlowNode label="SBERT" sub="문맥 전체 이해" color="cyan" />
+              </div>
+              <div className="flex items-center justify-center gap-0 mt-1">
+                <div className="flex-1 h-[1px] bg-gradient-to-r from-amber-500/40 via-blue-500/40 to-cyan-500/40" />
+                <ArrowRight className="w-3.5 h-3.5 text-cyan-500/50 flex-shrink-0" />
+              </div>
+            </div>
+          </div>
+        </DiagramBox>
+        <div className="flex flex-col gap-4">
+          <InfoCard icon={<GitBranch className="w-4 h-4 text-cyan-400" />} title="프로젝트 목적" delay={0.1}>
+            추천과 검색 기술의 세대별 한계를 교차 검증하기 위해 각 계보의 대표 알고리즘을 선정
+          </InfoCard>
+          <InfoCard icon={<Layers className="w-4 h-4 text-amber-400" />} title="추천의 진화" delay={0.2} accent="amber">
+            아이템 자체를 분석하는 CB(1세대) → 집단지성을 활용하는 CF(2세대) → 비선형적 패턴을 찾는 NCF(3세대)
+          </InfoCard>
+          <InfoCard icon={<Search className="w-4 h-4 text-blue-400" />} title="검색의 진화" delay={0.3} accent="blue">
+            단순 키워드 빈도를 쫓는 TF-IDF(1세대) → 단어의 좌표화 Word2Vec(2세대) → 문맥 전체를 이해하는 SBERT(3세대)
+          </InfoCard>
+          <InfoCard icon={<Target className="w-4 h-4 text-emerald-400" />} title="검증 방향" delay={0.4} accent="emerald">
+            이 6가지 모델을 동일한 선상에 두고, 각 세대가 가진 본질적 한계를 정량적으로 파헤침
+          </InfoCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Slide2() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 2 · Data Pipeline" title="추천과 검색을 위한 데이터 구조화" />
+      <SectionTitle tag="Slide 3 · Data Pipeline" title="추천과 검색을 위한 데이터 구조화" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>Pipeline Flow</p>
@@ -218,7 +280,7 @@ function Slide2() {
 function Slide3() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 3 · Content-Based Filtering" title="Algorithm 1: CB" />
+      <SectionTitle tag="Slide 4 · Content-Based Filtering" title="Algorithm 1: CB" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>아이템 속성 매칭</p>
@@ -254,7 +316,7 @@ function Slide3() {
 function Slide4() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 4 · Collaborative Filtering" title="Algorithm 2: CF" />
+      <SectionTitle tag="Slide 5 · Collaborative Filtering" title="Algorithm 2: CF" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>유저 네트워크</p>
@@ -290,7 +352,7 @@ function Slide4() {
 function Slide5() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 5 · Neural CF" title="Algorithm 3: NCF" />
+      <SectionTitle tag="Slide 6 · Neural CF" title="Algorithm 3: NCF" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>신경망 구조</p>
@@ -328,7 +390,7 @@ function Slide5() {
 function Slide6() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 6 · TF-IDF" title="Algorithm 4: TF-IDF" />
+      <SectionTitle tag="Slide 7 · TF-IDF" title="Algorithm 4: TF-IDF" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>텍스트 마이닝</p>
@@ -372,7 +434,7 @@ function Slide6() {
 function Slide7() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 7 · Word2Vec" title="Algorithm 5: Word2Vec" />
+      <SectionTitle tag="Slide 8 · Word2Vec" title="Algorithm 5: Word2Vec" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>벡터 공간 시각화</p>
@@ -422,7 +484,7 @@ function Slide7() {
 function Slide8() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 8 · SBERT" title="Algorithm 6: Sentence-BERT" />
+      <SectionTitle tag="Slide 9 · SBERT" title="Algorithm 6: Sentence-BERT" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>Transformer 임베딩</p>
@@ -461,7 +523,7 @@ function Slide8() {
 function Slide9() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 9 · Evaluation" title="자체 평가 환경 구축" />
+      <SectionTitle tag="Slide 10 · Evaluation" title="자체 평가 환경 구축" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>평가 로직 플로우</p>
@@ -504,7 +566,7 @@ function Slide10() {
   ];
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 10 · Results 1" title="추천 파이프라인 Trade-off 분석" />
+      <SectionTitle tag="Slide 11 · Results 1" title="추천 파이프라인 Trade-off 분석" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>비교 차트</p>
@@ -556,7 +618,7 @@ function Slide10() {
 function Slide11() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 11 · Results 2" title="시맨틱 검색 엔진 대조군 분석" />
+      <SectionTitle tag="Slide 12 · Results 2" title="시맨틱 검색 엔진 대조군 분석" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox className="!items-stretch">
           <div className="grid grid-cols-2 gap-4 h-full">
@@ -602,7 +664,7 @@ function Slide11() {
 function Slide12() {
   return (
     <div className={`w-full h-full flex flex-col ${BG} p-8 sm:p-10 lg:p-14`}>
-      <SectionTitle tag="Slide 12 · Future Work" title="정성 평가 (Qualitative UX) 도입" />
+      <SectionTitle tag="Slide 13 · Future Work" title="정성 평가 (Qualitative UX) 도입" />
       <div className="flex-1 grid lg:grid-cols-2 gap-6 mt-6">
         <DiagramBox>
           <p className={`text-xs uppercase tracking-wider ${ACCENT_TEXT} mb-4`}>A/B 테스트 UI 목업</p>
@@ -650,13 +712,13 @@ function Slide13() {
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-4xl px-8">
         <div className="text-center mb-10">
-          <SlideTag><Combine className="w-3.5 h-3.5" />Slide 13 · Conclusion</SlideTag>
+          <SlideTag><Combine className="w-3.5 h-3.5" />Slide 14 · Conclusion</SlideTag>
           <h2 className={`${HEADING_TEXT} text-3xl sm:text-4xl lg:text-5xl tracking-tight mt-4 leading-tight`}>
-            차세대{" "}
+            하이브리드 아키텍처를 통한
+            <br />
             <span className={`bg-gradient-to-r ${ACCENT} bg-clip-text text-transparent`}>
-              Hybrid 아키텍처
-            </span>{" "}
-            제안
+              시스템 최적화
+            </span>
           </h2>
         </div>
 
@@ -680,9 +742,9 @@ function Slide13() {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-10 grid grid-cols-3 gap-4 max-w-lg mx-auto">
           {[
-            "하이브리드 검색 도입",
-            "비즈니스 랭킹 로직",
-            "레거시 + 딥러닝 결합",
+            "딥러닝 ≠ 항상 최적",
+            "하이브리드 Sparse+Dense",
+            "도메인 맞춤 가중치",
           ].map((t, i) => (
             <div key={t} className="text-center px-3 py-2 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 text-xs">
               {t}
@@ -707,10 +769,10 @@ function Slide13() {
 
 /* ════════════════ SLIDE DECK CONTROLLER ════════════════ */
 
-const SLIDES = [Slide1, Slide2, Slide3, Slide4, Slide5, Slide6, Slide7, Slide8, Slide9, Slide10, Slide11, Slide12, Slide13];
+const SLIDES = [Slide1, Slide1_5, Slide2, Slide3, Slide4, Slide5, Slide6, Slide7, Slide8, Slide9, Slide10, Slide11, Slide12, Slide13];
 
 const SLIDE_LABELS = [
-  "Title", "Pipeline", "CB", "CF", "NCF", "TF-IDF", "Word2Vec", "SBERT",
+  "Title", "Taxonomy", "Pipeline", "CB", "CF", "NCF", "TF-IDF", "Word2Vec", "SBERT",
   "Evaluation", "Results 1", "Results 2", "Future", "Conclusion",
 ];
 
